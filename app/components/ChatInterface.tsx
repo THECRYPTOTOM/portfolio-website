@@ -13,11 +13,10 @@ export default function ChatInterface() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const isDisabled = true // Temporarily disable the chat
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isDisabled) return
+    if (!input.trim()) return
 
     const newMessage: Message = { role: 'user', content: input }
     setMessages(prev => [...prev, newMessage])
@@ -46,22 +45,54 @@ export default function ChatInterface() {
     } catch (error) {
       console.error('Chat error:', error)
       setError(error instanceof Error ? error.message : 'An error occurred while fetching the response')
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again or contact support if the issue persists.',
-      }])
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 opacity-75">
-      <div className="h-[400px] overflow-y-auto mb-6 space-y-4 flex items-center justify-center">
-        <p className="text-gray-500 text-center">
-          Chat functionality is temporarily disabled while we upgrade our systems.<br />
-          Please check back later!
-        </p>
+    <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="h-[400px] overflow-y-auto mb-6 space-y-4">
+        {messages.map((message, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] rounded-lg p-4 ${
+                message.role === 'user'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {message.content}
+            </div>
+          </motion.div>
+        ))}
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-start"
+          >
+            <div className="bg-gray-100 rounded-lg p-4 text-gray-800">
+              Thinking...
+            </div>
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center"
+          >
+            <div className="bg-red-100 text-red-600 rounded-lg p-4 max-w-[80%]">
+              Error: {error}
+            </div>
+          </motion.div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2">
@@ -69,14 +100,14 @@ export default function ChatInterface() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Chat temporarily unavailable..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
-          disabled={true}
+          placeholder="Ask me anything..."
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isLoading}
         />
         <button
           type="submit"
-          disabled={true}
-          className="px-6 py-2 bg-gray-400 text-white rounded-lg opacity-50 cursor-not-allowed"
+          disabled={isLoading}
+          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
         >
           Send
         </button>
