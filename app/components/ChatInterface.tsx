@@ -12,6 +12,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,6 +22,7 @@ export default function ChatInterface() {
     setMessages(prev => [...prev, newMessage])
     setInput('')
     setIsLoading(true)
+    setError(null)
 
     try {
       const response = await fetch('/api/chat', {
@@ -33,15 +35,19 @@ export default function ChatInterface() {
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to get response')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || 'Failed to get response')
+      }
 
       const data = await response.json()
       setMessages(prev => [...prev, data])
     } catch (error) {
       console.error('Chat error:', error)
+      setError(error instanceof Error ? error.message : 'An error occurred while fetching the response')
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: 'I apologize, but I encountered an error. Please try again or contact support if the issue persists.',
       }])
     } finally {
       setIsLoading(false)
@@ -77,6 +83,17 @@ export default function ChatInterface() {
           >
             <div className="bg-gray-100 rounded-lg p-4 text-gray-800">
               Thinking...
+            </div>
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center"
+          >
+            <div className="bg-red-100 text-red-600 rounded-lg p-4 max-w-[80%]">
+              Error: {error}
             </div>
           </motion.div>
         )}
